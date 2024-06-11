@@ -50,15 +50,18 @@ def main():
     a = float(input("Initial value for a: "))
     b = float(input("Initial value for b: "))
     c = float(input("Initial value for c: "))
+    d = float(input("Initial value for d:"))
     step_size = float(input("Step size: "))
     #store user initial guess for running the program again
     initial_a = a
     initial_b = b
     initial_c = c
+    initial_d = d
     #previous parameter values for the gradient descent algorithm
     prev_a = a
     prev_b = b
     prev_c = c
+    prev_d = d
     #initialize iteration number
     iteration = 0
 
@@ -77,11 +80,14 @@ def main():
             partial_b += -a*a*np.exp(-c*norm_t[i]-2*b*np.exp(-c*norm_t[i]))+norm_y[i]*a*np.exp(-c*norm_t[i]-b*np.exp(-c*norm_t[i]))
         for i in range(len(norm_t)):
             partial_c += a*a*b*norm_t[i]*np.exp(-c*norm_t[i]-2*b*np.exp(-c*norm_t[i]))-norm_y[i]*a*b*norm_t[i]*np.exp(-c*norm_t[i]-b*np.exp(-c*norm_t[i]))
+        for i in range(len(t)):
+            partial_d += 2*(a*np.exp(-b*np.exp(-c*norm_t[i])) + d - norm_y[i])
         #gradient descent algorithm:
         #update the parameters a,b, and c
         a = prev_a - step_size*partial_a
         b = prev_b - step_size*partial_b
         c = prev_c - step_size*partial_c
+        d = prev_d - step_size*partial_d
 
         if abs(partial_a)<0.00001 and abs(partial_b)<0.00001 and abs(partial_c)<0.00001:
             print (f"After {iteration}th interations: ")
@@ -92,7 +98,7 @@ def main():
             x = np.linspace(0,1,100)
             f_t = []
             for i in range(len(x)):
-                function_t = a * np.exp(-b * np.exp(-c * x[i]))
+                function_t = a * np.exp(-b * np.exp(-c * x[i]))+d
                 f_t.append(function_t)
             graphData(norm_t,norm_y,x,f_t)#calls the graphing function and graphs
             break
@@ -103,10 +109,10 @@ def main():
             print("initial a, b, and c above.")
             print(step_size)
             print("step size above.")
-            x = np.linspace(0,1,50)
+            x = np.linspace(0,1,100)
             f_t = []
             for i in range(len(x)):
-                function_t = a * np.exp(-b * np.exp(c * x[i]))
+                function_t = a * np.exp(-b * np.exp(c * x[i]))+d
                 f_t.append(function_t)
             graphData(norm_t,norm_y,x,f_t)
             break
@@ -114,5 +120,6 @@ def main():
         prev_a = a
         prev_b = b
         prev_c = c
+        prev_d = d
 
 main()
