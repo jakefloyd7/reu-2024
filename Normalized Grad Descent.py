@@ -61,7 +61,7 @@ def main2():
     initial_b = b
     c = float(input("Initial value for c: "))
     initial_c = c
-    d = float(input("Initial value for d:"))
+    d = float(input("Initial value for d: "))
     initial_d = d
     step_size = float(input("Determine the step size: "))
     #initialize variables
@@ -91,7 +91,7 @@ def main2():
         c = prev_c  - (step_size * partial_c)
         d = prev_d  - (step_size * partial_d)
         #print(f"iteration: {iteration}")
-        #print(f"partial a: {partial_a}, partial b:{partial_b}, partial c: {partial_c}")
+        #print(f"partial a: {partial_a}, partial b:{partial_b}, partial c: {partial_c}, partial d: {partial_d}")
         #print(f"Iteration: {iteration}")#checks for infinite loop
         if abs(partial_a)<0.0001 and abs(partial_b)<0.0001 and abs(partial_c)<0.0001 and abs(partial_d)<0.0001: #termination condition for the gradient descent algorithm
             print (f"After {iteration}th iteration: ")
