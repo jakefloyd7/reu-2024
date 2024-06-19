@@ -1,3 +1,14 @@
+"""
+READ:
+SeHwan Kim
+06.19.204
+
+runs now with 4 different for loops previously used is consolidated into one single for loop for
+efficiency. Complex terms (e.g. multiple "np.exp()" in a single term) are
+delegated to variables rather than typed out
+so the compiler computes a scaler value, not array.
+"""
+
 import numpy as np
 import math
 import matplotlib.pyplot as plt
@@ -23,20 +34,17 @@ def main():
 
     #store x values (time in minutes) into array t
     t = np.array([data[0] for data in data_1a])
-    t = t/72
+    #t = t/72
     #store y values into array y
     y = np.array([data[1] for data in data_1a])
 
-    """
     #normalize the x's
+    min_t = float(min(t))
+    max_t = float(max(t))
     norm_t = []
-    for i  in range(len(t)):
-        new_t = (t[i]/720)
-        norm_t.append(new_t)
-        #print(norm_t[i])
-    """
-
-    #print("now the y's")
+    for i in range(len(t)):
+        value = float((t[i] - min_t) / (max_t - min_t))
+        norm_t.append(value)
 
     #normalize the y's
     norm_y = []
@@ -46,8 +54,6 @@ def main():
         new_y = (y[i]-min_y)/(max_y-min_y)
         norm_y.append(new_y)
         #print(norm_y[i])
-
-
     
     #ask user for initial parameter guesses and step size
     a = float(input("Initial value for a: "))
@@ -76,19 +82,34 @@ def main():
         partial_b = 0
         partial_c = 0
         partial_d = 0
-        
+
+
+        """
+        #previous messy 4 different loops calculations:
         for i in range(len(t)):
-            #this is the e^(-b*e^(-c*t)) term
-            exp_term_no_coeff = np.exp(-b*np.exp(-c*t[i]))
-            #3 terms in side the sigma
-            inside_terms = a*np.exp(-b*np.exp(-c*t[i]))+d-norm_y[i]
-            #this is the e^((-c*t)-(b*e^(-c*t))) term
-            exp_term_minus_ct = np.exp((-c*t[i])-b*np.exp(-c*t[i]))
-            #summations for each partials
-            partial_a += 2*(inside_terms)*exp_term_no_coeff
-            partial_b += 2*(inside_terms)*-a*exp_term_minus_ct
-            partial_c += 2*(inside_terms)*exp_term_minus_ct*a*b*t[i]
-            partial_d += 2*(inside_terms)
+            partial_a += (a * np.exp(-2*b * np.exp(-c * norm_t[i])) - (norm_y[i] * np.exp(-b * np.exp(-c * norm_t[i]))) + (d * np.exp(-b * np.exp(-c * norm_t[i]))))
+        for i in range(len(t)):
+            partial_b += (-(a**2) * np.exp(-c*norm_t[i]-2*b*np.exp(-c*norm_t[i])) + (norm_y[i] * a * np.exp(-c*norm_t[i] - b*np.exp(-c*norm_t[i]))) - (a*d* np.exp(-c*norm_t[i] - b*np.exp(-c*norm_t[i]))))
+        for i in range(len(t)):
+            partial_c += ((a**2) *b*norm_t[i]*np.exp(-c*norm_t[i]-2*b*np.exp(-c*norm_t[i])) - (norm_y[i]*a*b*norm_t[i]*np.exp(-c*norm_t[i] - b*np.exp(-c*norm_t[i]))) + (norm_t[i]*a*b*d* np.exp(-c*norm_t[i] - b * np.exp(-c*norm_t[i]))))
+        for i in range(len(t)):
+            partial_d += (a*np.exp(-b*np.exp(-c*norm_t[i])) + d - norm_y[i])
+        """
+        
+        #now, consolidated into one loop and clean it up:
+        for i in range(len(t)):
+            #this is e^(-b*e^(-c*t))
+            exp_term_no_coeff = np.exp(-b*np.exp(-c*norm_t[i]))
+            #3 terms in side the sum
+            inside_terms = (a*np.exp(-b*np.exp(-c*norm_t[i]))+d-norm_y[i])
+            #e^((-c*t)-(b*e^(-c*t)))
+            exp_term_minus_ct = np.exp((-c*norm_t[i])-b*np.exp(-c*norm_t[i]))
+            #summations
+            partial_a += (inside_terms)*(exp_term_no_coeff)
+            partial_b += (inside_terms)*(-a)*(exp_term_minus_ct)
+            partial_c += (inside_terms)*(exp_term_minus_ct)*(a*b*norm_t[i])
+            partial_d += (inside_terms)
+        
 
         #gradient descent algorithm:
         #update the parameters a,b, and c
@@ -98,26 +119,27 @@ def main():
         d = prev_d  - (step_size * partial_d)
 
         if abs(partial_a)<0.0001 and abs(partial_b)<0.0001 and abs(partial_c)<0.0001 and abs(partial_d)<0.0001:
-            print (f"After {iteration}th interations: ")
+            print (f"After {iteration}th iterations: ")
             print (f"Parameter a is: {a} and partial A is {partial_a}")
             print (f"Parameter b is: {b} and partial B is {partial_b}")
             print (f"Parameter c is: {c} and partial C is {partial_c}")
             print (f"Parameter d is: {d} and partial C is {partial_d}")
             #Use the parameters found here for the function f(norm_t). Get and store the output values for the graph
-            x = np.linspace(0,10,100)
-            f_t = []
+            x = np.linspace(0,1,100)
+            f_t = []#normalize f_t?
             for i in range(len(x)):
                 function_t = a * np.exp(-b * np.exp(-c * x[i]))+d
                 f_t.append(function_t)
-            graphData(t,norm_y,x,f_t)
+            graphData(norm_t,norm_y,x,f_t)#calls the graphing function and graphs
             break
         
-        elif iteration >500000:
+        elif iteration >2000000:
             print("Too many iterations")
             print(initial_a,initial_b,initial_c,initial_d)
             print("initial a, b, c, and d above.")
             print(step_size)
             print("step size above.")
+            break
 
         prev_a = a
         prev_b = b
