@@ -36,6 +36,21 @@ def main():
                 (540,0.41),
                 (720,0.22)]
 
+    #updated with evenly spaced points calculated using lagrange interpolation
+    data_1a = [(0, 0.8),
+              (60, 0.8033),
+              (120, 0.8067),
+              (180, 0.81),
+              (240, 0.8133),
+              (300, 0.8167),
+              (360, 0.82),
+              (420, 0.6589),
+              (480, 0.5222),
+              (540, 0.41),
+              (600, 0.3222),
+              (660, 0.2589),
+              (720, 0.22)]
+
     #store x values (time in minutes) into array t
     t = np.array([data[0] for data in data_1a])
     #t = t/72
@@ -114,6 +129,8 @@ def main():
             partial_c += (inside_terms)*(exp_term_minus_ct)*(a*b*norm_t[i])
             partial_d += (inside_terms)
         
+        if iteration % 100 == 0:
+            print("iteration: ", iteration, ", partial a: ", partial_a, ", partial b: ", partial_b, ", partial c: ", partial_c, ", partial d: ", partial_d)
 
         #gradient descent algorithm:
         #update the parameters a,b, and c
