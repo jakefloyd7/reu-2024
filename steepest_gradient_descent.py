@@ -5,31 +5,33 @@ import matplotlib.pyplot as plt
 
 def graph_data(x, y, x_2, y_2):
     plt.figure()
-    plt.scatter(x, y, color='red')
-    plt.plot(x_2, y_2, color='blue')
-    plt.xlabel('Number of Days')
-    plt.ylabel('Number of Cells')
-    plt.title("Vector Cells - Regular Cancer Cells")
+    plt.scatter(x,y, color = 'purple')
+    plt.plot(x_2,y_2, color = 'green')
+    plt.xlabel('Time in minutes - normalized')
+    plt.ylabel('p_NFKB -noramlized')
+    plt.title('Over expression of HER2. Reach equilibrium. Block HER2 (in vivo) 1a')
     plt.ylim([-0.05, 1.05])
     return plt.show()
 
+# least squares
 def gamma(a, b, c, d, t, n):
     result = 0
     for i in range(len(t)):
-        result += (a * np.exp(-b * np.exp(-c * t[i])) + d - n[i]) ** 2
+        result += (gompertz(a, b, c, d, t[i]) - n[i]) ** 2
     return result
 
-def f(a, b, c, d, t):
+# Gompertz function with d parameter
+def gompertz(a, b, c, d, t):
     return a * np.exp(-b * np.exp(-c * t)) + d
 
 def validate_interval(df, x0, x1):
-    print(df(x0))
-    print(df(x1))
+    print(df(x0), df(x1))
     return df(x0) * df(x1) < 0
 
 def bisection(df, x0, x1, max_iter=100, tol=1e-3):
-    # if not validate_interval(df, x0, x1):
-        # return
+    print("x0: ", x0, ", x1: ", x1)
+    #if not validate_interval(df, x0, x1):
+        #return
     for i in range(max_iter):
         approximation = x0 + (x1 - x0) / 2
         y = df(approximation)
@@ -41,7 +43,7 @@ def bisection(df, x0, x1, max_iter=100, tol=1e-3):
             x0 = approximation
     return approximation
 
-
+# gradient of gamma
 def grad(x0, norm_t, norm_n):
     a = x0[0].item()
     b = x0[1].item()
@@ -53,11 +55,26 @@ def grad(x0, norm_t, norm_n):
     partial_c = 0
     partial_d = 0
     
-    for i in range(len(norm_t)):
+    # old loop, not cleaned up
+    '''for i in range(len(norm_t)):
         partial_a += (a * np.exp(-2*b * np.exp(-c * norm_t[i])) - (norm_n[i] * np.exp(-b * np.exp(-c * norm_t[i]))) + (d * np.exp(-b * np.exp(-c * norm_t[i]))))
         partial_b += (-(a**2) * np.exp(-c*norm_t[i]-2*b*np.exp(-c*norm_t[i])) + (norm_n[i] * a * np.exp(-c*norm_t[i] - b*np.exp(-c*norm_t[i]))) - (a*d* np.exp(-c*norm_t[i] - b*np.exp(-c*norm_t[i]))))
         partial_c += ((a**2) *b*norm_t[i]*np.exp(-c*norm_t[i]-2*b*np.exp(-c*norm_t[i])) - (norm_n[i]*a*b*norm_t[i]*np.exp(-c*norm_t[i] - b*np.exp(-c*norm_t[i]))) + (norm_t[i]*a*b*d* np.exp(-c*norm_t[i] - b * np.exp(-c*norm_t[i]))))
-        partial_d += (a*np.exp(-b*np.exp(-c*norm_t[i])) + d - norm_n[i])
+        partial_d += (a*np.exp(-b*np.exp(-c*norm_t[i])) + d - norm_n[i])'''
+    
+    #now, consolidated into one loop and clean it up:
+    for i in range(len(norm_t)):
+        #this is e^(-b*e^(-c*t))
+        exp_term_no_coeff = np.exp(-b*np.exp(-c*norm_t[i]))
+        #3 terms in side the sum
+        inside_terms = (a*np.exp(-b*np.exp(-c*norm_t[i]))+d-norm_n[i])
+        #e^((-c*t)-(b*e^(-c*t)))
+        exp_term_minus_ct = np.exp((-c*norm_t[i])-b*np.exp(-c*norm_t[i]))
+        #summations
+        partial_a += (inside_terms)*(exp_term_no_coeff)
+        partial_b += (inside_terms)*(-a)*(exp_term_minus_ct)
+        partial_c += (inside_terms)*(exp_term_minus_ct)*(a*b*norm_t[i])
+        partial_d += (inside_terms)
     
     g = np.zeros((4, 1))
     g[0] = partial_a
@@ -137,7 +154,7 @@ def main():
 
     # initialize variables
     iteration = 0
-    x0 = np.array([1, 1, 1, 1])
+    x0 = np.array([-1, 55, 6, 1])
     x0 = np.reshape(x0, (4, 1))
 
     # calculate and solve the parameters using the gradient descent method
@@ -146,17 +163,22 @@ def main():
         g = grad(x0, norm_t, norm_n)
 
         def d_ls_fun(z):
-            return np.dot(g.T, grad(x0 - z * g, norm_t, norm_n))
+            dx0 = g
+            x1 = x0 - z * dx0
+            dx1 = grad(x1, norm_t, norm_n)
+            return np.dot(dx0.T, dx1)
 
-        print("iteration: ", iteration)
-        step_size = bisection(d_ls_fun, -10, 10, 30, 1e-2)
+        step_size = bisection(d_ls_fun, -10, 10, 100, 1e-5)
         w = x0 - step_size * g
-        # print(f"iteration: {iteration}")
-        # print(f"partial a: {g[0]}, partial b:{g[1]}, partial c: {g[2]}, partial d: {g[3]}")
+        
+        print(f"iteration: {iteration}")
+        print(f"partial a: {g[0]}, partial b:{g[1]}, partial c: {g[2]}, partial d: {g[3]}")
+
+        print("termination condition: ", np.linalg.norm(w - x0) / np.linalg.norm(x0), np.linalg.norm(w - x0), np.linalg.norm(x0))
 
         # termination condition for the gradient descent algorithm
-        if np.linalg.norm(w - x0) / np.linalg.norm(x0) < 1e-4:
-            print(f"After {iteration}th interations: ")
+        if np.linalg.norm(w - x0) / np.linalg.norm(x0) < 1e-10:
+            print(f"After {iteration} iterations: ")
             print(f"Parameter a is: {w[0]} and partial A is {g[0]}")
             print(f"Parameter b is: {w[1]} and partial B is {g[1]}")
             print(f"Parameter c is: {w[2]} and partial C is {g[2]}")
@@ -171,12 +193,15 @@ def main():
             graph_data(norm_t, norm_n, x, f_t)  # calls the graphing function and graphs
             break
 
-        # elif iteration > 10000:
-        #     print("Too many iterations")
-        #     print(initial_a, initial_b, initial_c, step_size)
-        #     print(a, b, c)
-        #     print(f"partial a: {g[0]}, partial b:{g[1]}, partial c: {g[2]}")
-        #     break
+        '''
+        elif iteration > 10000:
+            print("Too many iterations")
+            print(initial_a, initial_b, initial_c, step_size)
+            print(a, b, c)
+            print(f"partial a: {g[0]}, partial b:{g[1]}, partial c: {g[2]}")
+            break
+        '''
+
         x0 = w
 
 
