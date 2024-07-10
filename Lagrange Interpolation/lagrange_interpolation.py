@@ -30,3 +30,45 @@ x_new = 660
 y_new = lagrange_interpolation(x, y, x_new)
 
 print(f'The interpolated y value at x = {x_new} is {y_new}')
+
+print('2a')
+
+#2a
+data = [(15,0.8),
+        (30,0.41),
+        (45,0.2),
+        (60,0.1),
+        (90,0.2)]
+
+x = np.array([data[0] for data in data])
+y = np.array([data[1] for data in data])
+
+x_news = [20, 25, 35, 40, 50, 55, 70, 80]
+for x_new in x_news:
+    i = 0
+    if x_new > 30:
+        i += 1
+    if x_new > 60:
+        i += 1
+    print(f'The interpolated y value at x = {x_new} is {lagrange_interpolation(x[i:i+3], y[i:i+3], x_new)}')
+
+print('2b')
+
+#2b
+data = [(15,0.7),
+        (30,0.61),
+        (45,0.41),
+        (60,0.3),
+        (90,0.2)]
+
+x = np.array([data[0] for data in data])
+y = np.array([data[1] for data in data])
+
+x_news = [20, 25, 35, 40, 50, 55, 70, 80]
+for x_new in x_news:
+    i = 0
+    if x_new > 30:
+        i += 1
+    if x_new > 60:
+        i += 1
+    print(f'The interpolated y value at x = {x_new} is {lagrange_interpolation(x[i:i+3], y[i:i+3], x_new)}')
