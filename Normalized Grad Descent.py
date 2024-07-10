@@ -20,6 +20,24 @@ t = np.array([0, 180, 360, 540, 720])
 
 n = np.array([0.8, 0.81, 0.82, 0.41, 0.22])
 
+data_1 = [(0, 0.8),
+              (60, 0.8033),
+              (120, 0.8067),
+              (180, 0.81),
+              (240, 0.8133),
+              (300, 0.8167),
+              (360, 0.82),
+              (420, 0.6589),
+              (480, 0.5222),
+              (540, 0.41),
+              (600, 0.3222),
+              (660, 0.2589),
+              (720, 0.22)]
+
+# store x values (time) of the data into array t
+t = np.array([data[0] for data in data_1])
+# store y values (number of cells) of the data into array n
+n = np.array([data[1] for data in data_1])
 
 # In[171]:
 
@@ -35,6 +53,11 @@ def graph_data(x,y,x_2,y_2):
 
 
 # In[205]:
+
+
+def adjust_learning_rate(initial_lr, epoch, gradient, decay_rate=0.000001):
+    a, b, c, d = gradient
+    return initial_lr * np.exp(-decay_rate * epoch)
 
 
 def main2():
@@ -63,7 +86,7 @@ def main2():
     initial_c = c
     d = float(input("Initial value for d: "))
     initial_d = d
-    step_size = float(input("Determine the step size: "))
+    step_size = float(input("Determine the initial step size: "))
     #initialize variables
     prev_a = a
     prev_b = b
@@ -86,13 +109,19 @@ def main2():
             partial_c += ((a**2) *b*norm_t[i]*np.exp(-c*norm_t[i]-2*b*np.exp(-c*norm_t[i])) - (norm_n[i]*a*b*norm_t[i]*np.exp(-c*norm_t[i] - b*np.exp(-c*norm_t[i]))) + (norm_t[i]*a*b*d* np.exp(-c*norm_t[i] - b * np.exp(-c*norm_t[i]))))
         for i in range(len(t)):
             partial_d += (a*np.exp(-b*np.exp(-c*norm_t[i])) + d - norm_n[i])
+
+        step_size = adjust_learning_rate(step_size, iteration, [partial_a, partial_b, partial_c, partial_d])
+        
         a = prev_a  - (step_size * partial_a) #next iteration of a gets updated i.e. a^(k+1)
         b = prev_b  - (step_size * partial_b)
         c = prev_c  - (step_size * partial_c)
         d = prev_d  - (step_size * partial_d)
-        #print(f"iteration: {iteration}")
-        #print(f"partial a: {partial_a}, partial b:{partial_b}, partial c: {partial_c}, partial d: {partial_d}")
-        #print(f"Iteration: {iteration}")#checks for infinite loop
+
+        if iteration%100==0:
+            print(f"iteration: {iteration}")
+            print(f"partial a: {partial_a}, partial b:{partial_b}, partial c: {partial_c}, partial d: {partial_d}")
+            print(f"Iteration: {iteration}")#checks for infinite loop
+        
         if abs(partial_a)<0.0001 and abs(partial_b)<0.0001 and abs(partial_c)<0.0001 and abs(partial_d)<0.0001: #termination condition for the gradient descent algorithm
             print (f"After {iteration}th iteration: ")
             print (f"Parameter a is: {a} and partial A is {partial_a}")
