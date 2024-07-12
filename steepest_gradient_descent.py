@@ -91,23 +91,14 @@ def grad(x0, norm_t, norm_n):
 
 
 def main():
-    # below are the collected data points from the 2023 lab
-    '''data_1 = [(0,150000),
-            (1,53777),
-            (2,65333),
-            (3,134909),
-            (4,222000),
-            (5,248773),
-            (6,376560),
-            (7,555000),
-            (8,975000),
-            (9,1280000),
-            (12,2302000),
-            (13,2673000),
-            (14,2870000)]'''
+    data_1a = [
+                (0,0.8),
+                (180,0.81),
+                (360,0.82),
+                (540,0.41),
+                (720,0.22)]
 
-    # below is the sample data from the 2024 lab supplemented by LaGrange interpolation
-    data_1 = [(0, 0.8),
+    data_1a_int = [(0, 0.8),
               (60, 0.8033),
               (120, 0.8067),
               (180, 0.81),
@@ -120,11 +111,62 @@ def main():
               (600, 0.3222),
               (660, 0.2589),
               (720, 0.22)]
+    
+    data_2a = [
+                (15,0.8),
+                (30,0.41),
+                (45,0.2),
+                (60,0.1),
+                (90,0.2)]
+
+    data_2a_int = [
+                (15,0.8),
+                (20,0.65),
+                (25,0.5199999999999999),
+                (30,0.41),
+                (35,0.3277777777777778),
+                (40,0.2577777777777778),
+                (45,0.2),
+                (50,0.15444444444444447),
+                (55,0.12111111111111111),
+                (60,0.1),
+                (70,0.08888888888888889),
+                (80,0.12222222222222222),
+                (90,0.2)]
+    
+    data_2b = [
+                (15,0.7),
+                (30,0.61),
+                (45,0.41),
+                (60,0.3),
+                (90,0.2)]
+
+    data_2b_int = [
+                (15,0.7),
+                (20,0.6822222222222223),
+                (25,0.6522222222222221),
+                (30,0.61),
+                (35,0.5333333333333333),
+                (40,0.4666666666666666),
+                (45,0.41),
+                (50,0.363333333333333),
+                (55,0.32666666666666666),
+                (60,0.3),
+                (70,0.24888888888888888),
+                (80,0.21555555555555556),
+                (90,0.2)]
+
+    the_data = data_1a
+    #the_data = data_1a_int
+    #the_data = data_2a
+    #the_data = data_2a_int
+    #the_data = data_2b
+    #the_data = data_2b_int
 
     # store x values (time) of the data into array t
-    t = np.array([data[0] for data in data_1])
+    t = np.array([data[0] for data in the_data])
     # store y values (number of cells) of the data into array n
-    n = np.array([data[1] for data in data_1])
+    n = np.array([data[1] for data in the_data])
 
     # normalization of the data
     min_n = float(min(n))
