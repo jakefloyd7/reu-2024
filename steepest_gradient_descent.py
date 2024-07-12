@@ -1,5 +1,5 @@
 import numpy as np
-import math
+import time
 import matplotlib.pyplot as plt
 
 
@@ -8,7 +8,7 @@ def graph_data(x, y, x_2, y_2):
     plt.scatter(x,y, color = 'purple')
     plt.plot(x_2,y_2, color = 'green')
     plt.xlabel('Time in minutes - normalized')
-    plt.ylabel('p_NFKB -noramlized')
+    plt.ylabel('p_NFKB')
     plt.title('Over expression of HER2. Reach equilibrium. Block HER2 (in vivo) 1a')
     plt.ylim([-0.05, 1.05])
     return plt.show()
@@ -44,7 +44,7 @@ def bisection(df, x0, x1, max_iter=100, tol=1e-3):
     return approximation
 
 # gradient of gamma
-def grad(x0, norm_t, norm_n):
+def grad(x0, norm_t, n):
     a = x0[0].item()
     b = x0[1].item()
     c = x0[2].item()
@@ -57,17 +57,17 @@ def grad(x0, norm_t, norm_n):
     
     # old loop, not cleaned up
     '''for i in range(len(norm_t)):
-        partial_a += (a * np.exp(-2*b * np.exp(-c * norm_t[i])) - (norm_n[i] * np.exp(-b * np.exp(-c * norm_t[i]))) + (d * np.exp(-b * np.exp(-c * norm_t[i]))))
-        partial_b += (-(a**2) * np.exp(-c*norm_t[i]-2*b*np.exp(-c*norm_t[i])) + (norm_n[i] * a * np.exp(-c*norm_t[i] - b*np.exp(-c*norm_t[i]))) - (a*d* np.exp(-c*norm_t[i] - b*np.exp(-c*norm_t[i]))))
-        partial_c += ((a**2) *b*norm_t[i]*np.exp(-c*norm_t[i]-2*b*np.exp(-c*norm_t[i])) - (norm_n[i]*a*b*norm_t[i]*np.exp(-c*norm_t[i] - b*np.exp(-c*norm_t[i]))) + (norm_t[i]*a*b*d* np.exp(-c*norm_t[i] - b * np.exp(-c*norm_t[i]))))
-        partial_d += (a*np.exp(-b*np.exp(-c*norm_t[i])) + d - norm_n[i])'''
+        partial_a += (a * np.exp(-2*b * np.exp(-c * norm_t[i])) - (n[i] * np.exp(-b * np.exp(-c * norm_t[i]))) + (d * np.exp(-b * np.exp(-c * norm_t[i]))))
+        partial_b += (-(a**2) * np.exp(-c*norm_t[i]-2*b*np.exp(-c*norm_t[i])) + (n[i] * a * np.exp(-c*norm_t[i] - b*np.exp(-c*norm_t[i]))) - (a*d* np.exp(-c*norm_t[i] - b*np.exp(-c*norm_t[i]))))
+        partial_c += ((a**2) *b*norm_t[i]*np.exp(-c*norm_t[i]-2*b*np.exp(-c*norm_t[i])) - (n[i]*a*b*norm_t[i]*np.exp(-c*norm_t[i] - b*np.exp(-c*norm_t[i]))) + (norm_t[i]*a*b*d* np.exp(-c*norm_t[i] - b * np.exp(-c*norm_t[i]))))
+        partial_d += (a*np.exp(-b*np.exp(-c*norm_t[i])) + d - n[i])'''
     
     #now, consolidated into one loop and clean it up:
     for i in range(len(norm_t)):
         #this is e^(-b*e^(-c*t))
         exp_term_no_coeff = np.exp(-b*np.exp(-c*norm_t[i]))
         #3 terms in side the sum
-        inside_terms = (a*np.exp(-b*np.exp(-c*norm_t[i]))+d-norm_n[i])
+        inside_terms = (a*np.exp(-b*np.exp(-c*norm_t[i]))+d-n[i])
         #e^((-c*t)-(b*e^(-c*t)))
         exp_term_minus_ct = np.exp((-c*norm_t[i])-b*np.exp(-c*norm_t[i]))
         #summations
@@ -169,13 +169,6 @@ def main():
     n = np.array([data[1] for data in the_data])
 
     # normalization of the data
-    min_n = float(min(n))
-    max_n = float(max(n))
-    norm_n = []  # this is the new list where the normalized data goes
-    for i in range(len(n)):
-        value = float((n[i] - min_n) / (max_n - min_n))
-        norm_n.append(value)
-
     min_t = float(min(t))
     max_t = float(max(t))
     norm_t = []  # this is the new list where the normalized data goes
@@ -198,16 +191,17 @@ def main():
     iteration = 0
     x0 = np.array([-1, 55, 6, 1])
     x0 = np.reshape(x0, (4, 1))
+    start_time = time.time()
 
     # calculate and solve the parameters using the gradient descent method
     while True:
         iteration += 1
-        g = grad(x0, norm_t, norm_n)
+        g = grad(x0, norm_t, n)
 
         def d_ls_fun(z):
             dx0 = g
             x1 = x0 - z * dx0
-            dx1 = grad(x1, norm_t, norm_n)
+            dx1 = grad(x1, norm_t, n)
             return np.dot(dx0.T, dx1)
 
         step_size = bisection(d_ls_fun, -10, 10, 100, 1e-5)
@@ -216,7 +210,7 @@ def main():
         print(f"iteration: {iteration}")
         print(f"partial a: {g[0]}, partial b:{g[1]}, partial c: {g[2]}, partial d: {g[3]}")
 
-        print("termination condition: ", np.linalg.norm(w - x0) / np.linalg.norm(x0), np.linalg.norm(w - x0), np.linalg.norm(x0))
+        #print("termination condition: ", np.linalg.norm(w - x0) / np.linalg.norm(x0), np.linalg.norm(w - x0), np.linalg.norm(x0))
 
         # termination condition for the gradient descent algorithm
         if np.linalg.norm(w - x0) / np.linalg.norm(x0) < 1e-10:
@@ -225,6 +219,8 @@ def main():
             print(f"Parameter b is: {w[1]} and partial B is {g[1]}")
             print(f"Parameter c is: {w[2]} and partial C is {g[2]}")
             print(f"Parameter d is: {w[3]} and partial D is {g[3]}")
+            print(f"Least squares calculation is: {gamma(w[0], w[1], w[2], w[3], norm_t, n)}")
+            print(f"Runtime is: {time.time()-start_time} seconds")
 
             # Use the parameters found here for the function f(t). Get and store the output values for the graph
             x = np.linspace(0, 1, 100)
@@ -232,7 +228,7 @@ def main():
             for i in range(len(x)):
                 function_t = w[0] * np.exp(-w[1] * np.exp(-w[2] * x[i])) + w[3]
                 f_t.append(function_t)
-            graph_data(norm_t, norm_n, x, f_t)  # calls the graphing function and graphs
+            graph_data(norm_t, n, x, f_t)  # calls the graphing function and graphs
             break
 
         '''
@@ -246,19 +242,4 @@ def main():
 
         x0 = w
 
-
 main()
-
-'''data_2 = [(0,150000),
-            (1,53777),
-            (2,65333),
-            (3,134909),
-            (4,222000),
-            (5,248773),
-            (6,376560),
-            (7,555000),
-            (8,975000),
-            (9,1280000),
-            (12,2302000),
-            (13,2673000),
-            (14,2870000)]'''
